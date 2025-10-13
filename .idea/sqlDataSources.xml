@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="DdlMappings">
+    <mapping uuid="f6bd015c-743a-4888-89cf-56584f7e5a33" name="BlackScreen Mapping">
+      <data-sources db="75528c1d-2ffd-416c-9d47-5a0adcd0b63e" />
+      <scope>
+        <node kind="schema" qname="BlackScreen" />
+      </scope>
+    </mapping>
+  </component>
+</project>
