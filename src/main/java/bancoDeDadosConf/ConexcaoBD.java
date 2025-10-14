@@ -10,7 +10,6 @@ import java.sql.SQLException;
 public class ConexcaoBD {
 
 
-    private static BasicDataSource dataSource;
 
     static {
         try {
