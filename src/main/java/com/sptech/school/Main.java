@@ -1,5 +1,8 @@
-import Lendo_CSV.LerCsv;
-import bancoDeDadosConf.ScriptSQL;
+package com.sptech.school;
+
+import com.sptech.school.Lendo_CSV.ETL;
+import com.sptech.school.Lendo_CSV.LerCsv;
+import com.sptech.school.bancoDeDadosConf.ScriptSQL;
 import java.util.concurrent.*;
 
 public class Main {

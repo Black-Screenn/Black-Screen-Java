@@ -1,7 +1,7 @@
 # BlackScreen java
-Projeto Java de ETL (Extract, Transform, Load) para Processamento e Integração de Dados
+Projeto Java de Lendo_CSV.ETL (Extract, Transform, Load) para Processamento e Integração de Dados
 
-Este projeto foi desenvolvido em Java e implementa um pipeline completo de ETL (Extract, Transform, Load), que é um processo essencial para a movimentação e tratamento de dados entre sistemas.
+Este projeto foi desenvolvido em Java e implementa um pipeline completo de Lendo_CSV.ETL (Extract, Transform, Load), que é um processo essencial para a movimentação e tratamento de dados entre sistemas.
 Principais Funcionalidades:
 
 Extração (Extract) de Arquivo CSV: O projeto inicia com a leitura e extração de informações de um arquivo no formato CSV (Comma Separated Values), uma fonte de dados comum em diversas aplicações.

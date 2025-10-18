@@ -1,10 +1,10 @@
-import Lendo_CSV.LerCsv;
-import bancoDeDadosConf.ConexcaoBD;
-import bancoDeDadosConf.ScriptSQL;
+package com.sptech.school.Lendo_CSV;
+
+import com.sptech.school.bancoDeDadosConf.ConexcaoBD;
+import com.sptech.school.bancoDeDadosConf.ScriptSQL;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 

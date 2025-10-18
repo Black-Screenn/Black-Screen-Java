@@ -1,4 +1,4 @@
-package bancoDeDadosConf;
+package com.sptech.school.bancoDeDadosConf;
 
 
 import org.apache.commons.dbcp2.BasicDataSource;

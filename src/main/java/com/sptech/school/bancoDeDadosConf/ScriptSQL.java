@@ -1,6 +1,8 @@
-package bancoDeDadosConf;
+package com.sptech.school.bancoDeDadosConf;
 
-import Domain.*;
+import com.sptech.school.Domain.Componentes;
+import com.sptech.school.Domain.Computador;
+import com.sptech.school.Domain.Parametros;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;

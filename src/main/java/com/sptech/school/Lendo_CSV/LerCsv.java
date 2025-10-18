@@ -1,4 +1,4 @@
-package Lendo_CSV;
+package com.sptech.school.Lendo_CSV;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

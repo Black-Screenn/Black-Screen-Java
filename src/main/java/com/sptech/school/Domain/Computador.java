@@ -1,4 +1,4 @@
-package Domain;
+package com.sptech.school.Domain;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
