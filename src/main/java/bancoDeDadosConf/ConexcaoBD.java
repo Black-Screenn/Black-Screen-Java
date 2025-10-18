@@ -1,7 +1,6 @@
 package bancoDeDadosConf;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
+
 import org.apache.commons.dbcp2.BasicDataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -9,7 +8,9 @@ import java.sql.SQLException;
 
 public class ConexcaoBD {
 
+    
 
+    
 
     static {
         try {
