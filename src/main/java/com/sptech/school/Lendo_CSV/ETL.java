@@ -4,8 +4,11 @@ import com.sptech.school.bancoDeDadosConf.ConexcaoBD;
 import com.sptech.school.bancoDeDadosConf.ScriptSQL;
 
 import java.sql.SQLException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Formatter;
 import java.util.List;
 
 public class ETL {
@@ -13,142 +16,151 @@ public class ETL {
     LerCsv lerCsv;
     ScriptSQL scriptSQL;
     ConexcaoBD conexcaoBD;
-    ScriptSQL ScriptSQL;
 
+    public ETL(LerCsv lerCsv, ScriptSQL scriptSQL, ConexcaoBD conexcaoBD) {
+        this.lerCsv = lerCsv;
+        this.scriptSQL = scriptSQL;
+        this.conexcaoBD = conexcaoBD;
+    }
     public String csvMaquina = "src/df_capturaMaquina.csv";
     public String csvProcesso = "src/df_capturaProcesso.csv";
-
-    public class ResultadoCsv {
-        private Double mediana;
-        private String[] cabecalhos;
-        private List<Double> valores;
-
-        public ResultadoCsv(Double mediana, String[] cabecalhos, List<Double> valores) {
-            this.mediana = mediana;
-            this.cabecalhos = cabecalhos;
-            this.valores = valores;
-        }
-
-        public Double getMediana() { return mediana; }
-        public String[] getCabecalhos() { return cabecalhos; }
-        public List<Double> getValores() { return valores; }
-    }
-    public  class ResultadoComparacao {
-        private String nomeComponente;
-        private Double valorCsv;
-        private Long valorBanco;
-        private Boolean alertaGerado;
-        private String mensagem;
-
-        public ResultadoComparacao(String nomeComponente, Double valorCsv, Long valorBanco,
-                                   Boolean alertaGerado, String mensagem) {
-            this.nomeComponente = nomeComponente;
-            this.valorCsv = valorCsv;
-            this.valorBanco = valorBanco;
-            this.alertaGerado = alertaGerado;
-            this.mensagem = mensagem;
-        }
-
-    }
-    public ResultadoCsv tratandoCsv(LerCsv lerCsv, String nomeColuna) {
-        List<String[]> dados = lerCsv.leituraCsv(csvMaquina);
-
-        if(csvMaquina == null||csvMaquina.equals("")){
-            System.out.println("Csv vazio ou nulo");
-            return null;
-        }
-        String[] cabecalhos = dados.get(0);
-        int indiceColunaDesejada = -1;
-        for (int i =0; i < cabecalhos.length; i++) {
-            if(cabecalhos[i].equals(nomeColuna)){
-                indiceColunaDesejada = i;
-                break;
-            }
-        }
-        List<Double> valores = new ArrayList<>();
-        for (int i = 1; i < dados.size(); i++) {
-            String[] linha = dados.get(i);
-
-            if (indiceColunaDesejada < linha.length) {
-                try {
-                    double valor = Double.parseDouble(linha[indiceColunaDesejada].trim());
-                    valores.add(valor);
-                } catch (NumberFormatException e) {
-                    System.out.println("Valor inválido na linha " + i + ": " + linha[indiceColunaDesejada]);
-                }
-            }
-        }
-        Double mediana = calcularMediana(valores);
-        return new ResultadoCsv(mediana, cabecalhos, valores);
-    }
-    public Double calcularMediana(List<Double> valores) {
-        if (valores.isEmpty()) {
-            return null;
-        }
-        Collections.sort(valores);
-        int tamanho = valores.size();
-        if (tamanho % 2 == 0) {
-            return (valores.get(tamanho / 2 - 1) + valores.get(tamanho / 2)) / 2.0;
-        } else {
-            return valores.get(tamanho / 2);
-
-        }
-    }
-    public int compararValoresprocessarEGerarCsvAlerta(LerCsv lerCsv, ScriptSQL scriptSQL, String nomeComponente, String csvAlerta, String Id_Usuario) throws SQLException {
+    public List<String[]> limparCabecalhoEValores(String nomedoCsv) {
 
         List<String[]> dadosOriginais = lerCsv.leituraCsv(csvMaquina);
-        Integer idComputadorBanco = scriptSQL.buscarPorUsuario(Integer.parseInt(Id_Usuario));
 
-        if (idComputadorBanco == null) {
-            System.err.println("ERRO: ID do computador não encontrado para o usuário: " + Id_Usuario);
-            return 0;
-        }
-        int idComputador = idComputadorBanco;
-        Long valorBanco = scriptSQL.buscarParametroPorNome(nomeComponente, idComputador);
-        if (valorBanco == null) {
-            return 0;
-        }
-        String[] cabecalhos = dadosOriginais.get(0);
+        List<String[]> dadosLimpos = new ArrayList<>();
+
+        String[] cabecalho = dadosOriginais.get(0);
         int indiceColuna = -1;
 
-        for (int i = 0; i < cabecalhos.length; i++) {
-            String cabecalhoLimpo = cabecalhos[i].trim().replace("\"", "");
-            if (cabecalhoLimpo.equalsIgnoreCase(nomeComponente)) {
-                indiceColuna = i;
-                System.out.println(indiceColuna);
-                break;
-            }
-
+        for (int i = 0; i < cabecalho.length; i++) {
+            String cabecalhoLimpo = cabecalho[i].trim().replace("\"", "");
         }
-        List<String[]> linhasAlerta = new ArrayList<>();
-        linhasAlerta.add(cabecalhos);
-        int contador = 0;
+        dadosLimpos.add(cabecalho);
 
         for (int i = 1; i < dadosOriginais.size(); i++) {
-            String[] linha = dadosOriginais.get(i);
+            String[] linhaOriginal = dadosOriginais.get(i);
+            String[] linhaLimpa = new String[linhaOriginal.length];
+            for (int j = 0; j < linhaOriginal.length; j++) {
+                linhaLimpa[j] = linhaOriginal[j].trim().replace("\"", "").replace(",", ".");
+            }
+            dadosLimpos.add(linhaLimpa);
+        }
+            LerCsv.escreverCsv("csvTrusted", dadosLimpos);
+            return dadosLimpos;
+    }
+    public List<String[]> ordenarPorData(List<String[]> dadosLimpos, int indiceColuna){
+    int inicioDados=1;
+    int n=dadosLimpos.size();
 
-            try {
-                String valorString = linha[indiceColuna];
-                String valorLimpo = valorString
-                        .trim()
-                        .replace("\"", "")
-                        .replace(",", ".");
-                double valor = Double.parseDouble(valorLimpo);
-                if (valor > valorBanco //min ou max no banco
-                ) {
-                    linhasAlerta.add(linha);
-                    contador++;
+        final DateTimeFormatter FORMATTER =
+                DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSSSSS");
 
+    for(int i = inicioDados; i < n - 1; i++){
+        boolean Trocou = false;
+        for(int j = inicioDados; j < n - 1  - (i - inicioDados); j++){
+            String[]linhaAtual = dadosLimpos.get(j);
+            String[] proximaLinha= dadosLimpos.get(j+1);
+            try{
+                LocalDateTime dataAtual =  LocalDateTime.parse(linhaAtual[indiceColuna], FORMATTER);
+                LocalDateTime ProximaData = LocalDateTime.parse(proximaLinha[indiceColuna], FORMATTER);
+                if(dataAtual.compareTo(ProximaData) > 0){
+                    String[] temp = linhaAtual;
+                    dadosLimpos.set(j,proximaLinha);
+                    dadosLimpos.set(j + 1,temp);
+                    Trocou = true;
                 }
-            } catch (NumberFormatException e) {
+            }catch(Exception e){
+                System.out.println("Erro na hora de ordenar a data e hora");
             }
         }
-        if (contador > 0) {
-            LerCsv.escreverCsv(csvAlerta, linhasAlerta, indiceColuna);
+            if(!Trocou){
+                break;
+            }
+    }
+    return dadosLimpos;
+    }
+    public List<String[]> ordenacaoValores(List<String[]> dadosLimpos, int indiceColuna) {
+            int inicioDados =1;
+            int n = dadosLimpos.size();
+
+        for(int i = inicioDados ;  i < n -1; i++){
+            boolean Trocou = false;
+
+            for(int j = inicioDados; j < n -1 - ( i - inicioDados); j++){
+               String[] linhaAtual = dadosLimpos.get(j);
+               String[] linhaProxima = dadosLimpos.get(j+1);
+                try{
+                    Double valorAtual = Double.parseDouble(linhaAtual[indiceColuna]);
+                    Double valorProxima = Double.parseDouble(linhaProxima[indiceColuna]);
+                    if(valorAtual.compareTo(valorProxima) > 0) {
+                        String[] temp = linhaAtual;
+                        dadosLimpos.set(j, linhaProxima);
+                        dadosLimpos.set(j+1, temp);
+                        Trocou = true;
+                    }
+                }catch (NumberFormatException e){
+                    System.out.println("Valor invalido na encontrado na hora de ordenar os valores");
+                }
+
+            }
+                if(!Trocou){
+                    break;
+                }
+        }
+        return dadosLimpos;
+    }
+    public List<String[]> compararCsvBd(ScriptSQL scriptSQL, LerCsv lerCsv, Integer idUsuario) throws SQLException{
+
+        scriptSQL.setConnection();
+        Integer idComputador = scriptSQL.buscarPorUsuario(idUsuario);
+
+        List<String[]> dadosLimpos =  limparCabecalhoEValores(this.csvMaquina);
+        List<String> nomesComponentes = scriptSQL.buscarNomesComponentes(idComputador);
+
+        String[] cabecalho = dadosLimpos.get(0);
+
+        if(nomesComponentes == null){
+            System.out.println("Componente NULL");
+            return new ArrayList<>();
+        }if (nomesComponentes.isEmpty()){
+            System.out.println("Nenhum componente encontrado");
         }
 
-        return contador;
+        List<String[]> linhasEmAlertas = new ArrayList<>();
+        linhasEmAlertas.add(cabecalho);
 
+        for (String nomeComponente : nomesComponentes) {
+            int indiceColuna = -1;
+            for(int i = 0; i < cabecalho.length; i++){
+                if(cabecalho[i].equals(nomeComponente)){
+                    indiceColuna = i;
+                    break;
+                }
+
+            }
+            Double valorParametro = scriptSQL.buscarParametroPorNomeDoComponente(nomeComponente, idComputador);
+            if(valorParametro == null){
+                System.out.println("Nenhum parametro encontrado para o componentne" +  nomeComponente);
+                continue;
+            }
+            for (int i = 1; i < dadosLimpos.size(); i++){
+                String[] linha = dadosLimpos.get(i);
+                try{
+                    Double valorAtual = Double.parseDouble(linha[indiceColuna]);
+                    if (valorAtual  >  valorParametro) {
+                        linhasEmAlertas.add(linha);
+                    }
+                }catch (Exception e){
+                    System.out.println("Falha em transformar o valor em Double");
+                }
+            }
+
+        }
+        if(linhasEmAlertas.size() > 1){
+            lerCsv.escreverCsv("/dadosEmAlertas/csv"+nomesComponentes,linhasEmAlertas);
+        }
+        return linhasEmAlertas;
     }
 
 

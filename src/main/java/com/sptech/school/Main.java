@@ -20,7 +20,7 @@ public class Main {
                 String nomeComponente = "cpu";
                 String nomeCsvAlerta = "alertas.csv";
                 String idUsuario = "7";
-                int quantidadeAlertas = etl.compararValoresprocessarEGerarCsvAlerta(
+                int quantidadeAlertas = etl.tratarCsv(
                         lerCsv,
                         scriptSQL,
                         nomeComponente,

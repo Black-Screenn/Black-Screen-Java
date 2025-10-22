@@ -48,74 +48,36 @@ public class ScriptSQL {
         return null;
     }
 
-    public Long buscarParametroPorNome(String nomeComponente, int idComputador) throws SQLException {
+    public java.util.List<String> buscarNomesComponentes(int idComputador) throws SQLException {
+        java.util.List<String> nomesComponentes = new java.util.ArrayList<>();
+        String query = String.format(
+                "SELECT Nome_Componente FROM Componentes WHERE Fk_Computador = %d;",
+                idComputador
+        );
+
+        ResultSet rs = this.statement.executeQuery(query);
+        while (rs.next()) {
+            nomesComponentes.add(rs.getString("Nome_Componente"));
+        }
+        return nomesComponentes;
+    }
+
+    public Double buscarParametroPorNomeDoComponente(String nomeComponente, int idComputador) throws SQLException {
         String query = String.format(
                 "SELECT p.Valor_Parametrizado " +
                         "FROM Parametros p " +
                         "INNER JOIN Componentes c ON p.Fk_Componente = c.Id_Componente " +
                         "WHERE c.Nome_Componente = '%s' AND c.Fk_Computador = %d;",
-               nomeComponente, idComputador
+                nomeComponente, idComputador
         );
 
         ResultSet rs = this.statement.executeQuery(query);
         if (rs.next()) {
-            return rs.getLong("Valor_Parametrizado");
+            return rs.getDouble("Valor_Parametrizado");
         }
         return null;
     }
 
-    public long buscarParametrosComponentes(Componentes componente) throws SQLException {
-        String query = String.format(
-                "SELECT Valor_Parametrizado FROM Parametros WHERE Fk_Componente = %d;",
-                componente.getIdComponente()
-        );
 
-        ResultSet rs = this.statement.executeQuery(query);
-        if (rs.next()) {
-            return rs.getLong("Valor_Parametrizado");
-        }
-        return 0;
-    }
-
-    public String buscarComputadores(Computador computador) throws SQLException {
-        String query = String.format(
-                "SELECT Nome_Maquina FROM Computador WHERE Nome_Maquina = '%s';",
-                computador.getNomeMaquina()
-        );
-
-        ResultSet rs = this.statement.executeQuery(query);
-        if (rs.next()) {
-            return rs.getString("Nome_Maquina");
-        }
-        return null;
-    }
-
-    public void inicializarComputadorPorNome(String nomeMaquina) throws SQLException {
-        if (this.statement == null) {
-            throw new IllegalStateException("O Statement não foi inicializado. Chame setConnection() primeiro.");
-        }
-
-        String query = String.format(
-                "SELECT Id_Computador, Nome_Maquina FROM Computador WHERE Nome_Maquina = '%s';",
-                nomeMaquina
-        );
-
-        ResultSet rs = this.statement.executeQuery(query);
-
-        if (rs.next()) {
-            int id = rs.getInt("Id_Computador");
-            String nome = rs.getString("Nome_Maquina");
-
-            Computador comp = new Computador();
-            comp.setIdComputador(id);
-            comp.setNomeMaquina(nome);
-
-            this.setComputador(comp);
-            System.out.println("INFO: Computador carregado com sucesso! ID: " + id);
-        } else {
-            this.setComputador(null);
-            System.err.println("ALERTA: Máquina '" + nomeMaquina + "' não encontrada no cadastro.");
-        }
-    }
 
 }

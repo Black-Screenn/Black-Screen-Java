@@ -39,26 +39,16 @@ public class LerCsv {
 
         return dados;
     }
-    public static void escreverCsv(String csvRefatorado, List<String[]> linhas, int indiceColunaSelecionada) {
+    public static void escreverCsv(String novoNomeCsv, List<String[]> linhas) {
         try (BufferedWriter writer = new BufferedWriter(
-                new OutputStreamWriter(new FileOutputStream(csvRefatorado,true), StandardCharsets.UTF_8))) {
+                new OutputStreamWriter(new FileOutputStream(novoNomeCsv,true), StandardCharsets.UTF_8))) {
 
-            if(!linhas.isEmpty()){
-                String[] cabecalho = linhas.get(0);
-                if(indiceColunaSelecionada>=0 && indiceColunaSelecionada < cabecalho.length){
-                    writer.write(cabecalho[indiceColunaSelecionada]);
+            for (String[] linha: linhas) {
+                    String linhaCsv = String.join(",",linha);
+                    writer.write(linhaCsv);
                     writer.newLine();
-                }
             }
-            for (int i = 1; i < linhas.size(); i++) {
-                String[] linha = linhas.get(i);
-                if(indiceColunaSelecionada>=0 && indiceColunaSelecionada < linha.length){
-                    String valorColuna = linha[indiceColunaSelecionada];
-                    writer.write(valorColuna);
-                    writer.newLine();
-                }
-            }
-            System.out.println("Arquivo CSV escrito com sucesso: " + csvRefatorado);
+            System.out.println("Arquivo CSV escrito com sucesso: " + novoNomeCsv);
         } catch (IOException e) {
             System.out.println("Erro ao escrever o arquivo: " + e);
         }
