@@ -1,12 +1,13 @@
 package com.sptech.school.Domain;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 
 @Getter
 @Setter
-@RequiredArgsConstructor
+@AllArgsConstructor
 public class Empresa {
 
   private int idEmpresa;
@@ -16,12 +17,5 @@ public class Empresa {
   private String telefone;
   private int fkEndereco;
 
-    public Empresa(int idEmpresa,String nome, String cnpj, String razaoSocial, String telefone, int fkEndereco){
-    this.idEmpresa=idEmpresa;
-    this.nome=nome;
-    this.cnpj=cnpj;
-    this.razaoSocial=razaoSocial;
-    this.telefone=telefone;
-    this.fkEndereco=fkEndereco;
-    }
+
 }

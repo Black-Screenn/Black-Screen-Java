@@ -5,7 +5,7 @@
       <driver-ref>mysql.cloud_sql.8</driver-ref>
       <synchronize>true</synchronize>
       <jdbc-driver>com.mysql.cj.jdbc.Driver</jdbc-driver>
-      <jdbc-url>jdbc:mysql://18.207.233.232/BlackScreen</jdbc-url>
+      <jdbc-url>jdbc:mysql://34.200.71.32/BlackScreen</jdbc-url>
       <working-dir>$ProjectFileDir$</working-dir>
     </data-source>
   </component>

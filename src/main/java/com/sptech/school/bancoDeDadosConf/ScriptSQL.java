@@ -10,6 +10,10 @@ import lombok.Setter;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Getter
 @Setter
@@ -31,27 +35,32 @@ public class ScriptSQL {
             System.out.println("INFO: Conexão e Statement inicializados com sucesso!");
         }
     }
+    public List<Integer> buscarPorUsuario(Integer idUsuario) throws SQLException {
+        List<Integer> idsComputadores = new ArrayList<>();
 
-    public Integer buscarPorUsuario(Integer idUsuario) throws SQLException {
         String query = String.format(
                 "SELECT c.Id_Computador " +
                         "FROM Computador c " +
-                        "INNER JOIN Log_Acesso_Computador lac ON c.Id_Computador = lac.Id_Computador " +
-                        "WHERE lac.Id_Usuario = %d;",
+                        "INNER JOIN Usuario u ON c.Fk_Empresa = u.Fk_Empresa " +
+                        "WHERE u.Id_Usuario = %d;",
                 idUsuario
         );
 
         ResultSet rs = this.statement.executeQuery(query);
-        if (rs.next()) {
-            return rs.getInt("Id_Computador");
-        }
-        return null;
-    }
 
+        while (rs.next()) {
+            idsComputadores.add(rs.getInt("Id_Computador"));
+        }
+
+        return idsComputadores;
+    }
     public java.util.List<String> buscarNomesComponentes(int idComputador) throws SQLException {
         java.util.List<String> nomesComponentes = new java.util.ArrayList<>();
         String query = String.format(
-                "SELECT Nome_Componente FROM Componentes WHERE Fk_Computador = %d;",
+                "select p.Valor_Parametrizado , c.Nome_Componente \n" +
+                        "\t\tfrom Parametros AS p \n" +
+                        "\t\tinner join Componentes as c on c.Id_Componente = p.Fk_Componente \n" +
+                        "\t\tinner join Computador as comp on comp.Id_Computador = c.Fk_Computador;",
                 idComputador
         );
 
@@ -61,7 +70,6 @@ public class ScriptSQL {
         }
         return nomesComponentes;
     }
-
     public Double buscarParametroPorNomeDoComponente(String nomeComponente, int idComputador) throws SQLException {
         String query = String.format(
                 "SELECT p.Valor_Parametrizado " +
@@ -77,7 +85,29 @@ public class ScriptSQL {
         }
         return null;
     }
+    public Map<String, Double> buscarTodosParametrosPorUsuario(Integer idUsuario) throws SQLException {
+        Map<String, Double> parametros = new HashMap<>();
 
+        String query = String.format(
+                "SELECT c.Nome_Componente, p.Valor_Parametrizado " +
+                        "FROM Usuario u " +
+                        "JOIN Computador comp ON u.Fk_Empresa = comp.Fk_Empresa " +
+                        "JOIN Componentes c ON comp.Id_Computador = c.Fk_Computador " +
+                        "JOIN Parametros p ON c.Id_Componente = p.Fk_Componente " +
+                        "WHERE u.Id_Usuario = %d;",
+                idUsuario
+        );
+
+        ResultSet rs = this.statement.executeQuery(query);
+        while (rs.next()) {
+            String nomeComponente = rs.getString("Nome_Componente").toLowerCase();
+            Double valorParametro = rs.getDouble("Valor_Parametrizado");
+
+            parametros.put(nomeComponente, valorParametro);
+        }
+
+        return parametros;
+    }
 
 
 }

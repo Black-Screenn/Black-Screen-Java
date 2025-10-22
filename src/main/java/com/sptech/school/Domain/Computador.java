@@ -7,7 +7,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-@RequiredArgsConstructor
+@AllArgsConstructor
 public class Computador {
 
   private int idComputador;

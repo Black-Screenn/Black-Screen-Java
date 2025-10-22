@@ -1,23 +1,19 @@
 package com.sptech.school.Domain;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 
 @Getter
 @Setter
-@RequiredArgsConstructor
+@AllArgsConstructor
 public class Parametros {
 
   private int idParametro;
   private long valorParametrizado;
   private int fkComponente;
 
-public Parametros(int idParametro, long valorParametrizado, int fkComponente){
-        this.idParametro = idParametro;
-        this.valorParametrizado = valorParametrizado;
-        this.fkComponente = fkComponente;
 
-}
 
 }
