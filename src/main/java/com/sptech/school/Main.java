@@ -5,15 +5,21 @@ import com.sptech.school.Lendo_CSV.LerCsv;
 import com.sptech.school.bancoDeDadosConf.ConexcaoBD;
 import com.sptech.school.bancoDeDadosConf.ScriptSQL;
 
+import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class Main {
 
     private static final String CAMINHO_CSV_LOCAL = "src/df_capturaMaquina.csv";
 
     public static void main(String[] args) throws Exception {
+        ScheduledExecutorService agenda = Executors.newSingleThreadScheduledExecutor();
+
         System.out.println("--- INICIANDO PROCESSO DE ETL ---");
 
         LerCsv leitorEscritor = new LerCsv();
@@ -21,6 +27,7 @@ public class Main {
         ScriptSQL scriptSQL = new ScriptSQL();
         ETL etl = new ETL(leitorEscritor, scriptSQL, conexaoBD);
 
+        Thread thread = new Thread(() -> {
         System.out.println("\nPASSO 1: Lendo e limpando dados de " + CAMINHO_CSV_LOCAL);
         List<String[]> dadosLimpos = etl.limparDadosDoCsv(CAMINHO_CSV_LOCAL);
         if(dadosLimpos.isEmpty()) {
@@ -40,12 +47,30 @@ public class Main {
         System.out.println("Usuários encontrados no CSV para verificação: " + usuariosNoCsv);
 
         for (Integer idUsuario : usuariosNoCsv) {
-            etl.gerarAlertas(dadosLimpos, idUsuario);
+            try {
+                etl.gerarAlertas(dadosLimpos, idUsuario);
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
         }
-        System.out.println("-> Processo de alertas concluído. Verifique os arquivos 'alertas_*.csv'.");
 
         System.out.println("\n--- PROCESSO DE ETL CONCLUÍDO ---");
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        });
+        agenda.scheduleAtFixedRate(
+                thread,
+                0,
+                5,
+                TimeUnit.SECONDS
+        );
+        thread.start();
     }
+
+
 
     public static Set<Integer> extrairUsuariosUnicos(List<String[]> dados) {
         Set<Integer> usuarios = new HashSet<>();

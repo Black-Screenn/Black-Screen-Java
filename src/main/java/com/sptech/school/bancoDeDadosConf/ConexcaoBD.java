@@ -1,6 +1,7 @@
 package com.sptech.school.bancoDeDadosConf;
 
 
+import com.sptech.school.Main;
 import org.apache.commons.dbcp2.BasicDataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -8,9 +9,9 @@ import java.sql.SQLException;
 
 public class ConexcaoBD {
 
-    
 
-    
+
+
 
     static {
         try {

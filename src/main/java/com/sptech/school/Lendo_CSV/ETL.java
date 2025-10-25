@@ -3,6 +3,8 @@ package com.sptech.school.Lendo_CSV;
 import ErrosETL.ErrosETL;
 import com.sptech.school.bancoDeDadosConf.ConexcaoBD;
 import com.sptech.school.bancoDeDadosConf.ScriptSQL;
+
+
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -10,8 +12,9 @@ import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Timer;
 
-public class ETL {
+public class ETL extends Thread{
     public LerCsv lerCsv;
     public ScriptSQL scriptSQL;
     public ConexcaoBD conexcaoBD;
@@ -21,7 +24,6 @@ public class ETL {
         this.scriptSQL = scriptSQL;
         this.conexcaoBD = conexcaoBD;
     }
-
 
     public List<String[]> limparDadosDoCsv(String caminhoCsv) {
         List<String[]> dadosOriginais = lerCsv.leituraCsv(caminhoCsv);
@@ -74,7 +76,7 @@ public class ETL {
             }
         }
 
-        DateTimeFormatter formatadorSaida = DateTimeFormatter.ofPattern("yyyy-MM-dd HH");
+        DateTimeFormatter formatadorSaida = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
         List<String[]> dadosProcessados = new ArrayList<>();
         dadosProcessados.add(dadosLimpos.get(0));
 
@@ -90,11 +92,77 @@ public class ETL {
 
         return dadosProcessados;
     }
-    public void gerarAlertas(List<String[]> dadosLimpos, Integer idUsuario) throws SQLException, ErrosETL {
-        scriptSQL.setConnection();
+    private int indice(String[] header, String columnName) {
+        for (int i = 0; i < header.length; i++) {
+            if (header[i].equalsIgnoreCase(columnName)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+    private void verificarECriarAlertas(String[] linha, int indiceComponente, Double parametro, List<String[]> listaAlertas, int indiceUsuario, int indiceTimestamp) {
+        if (indiceComponente != -1 && parametro != null) {
+            try {
+                double valorAtual = Double.parseDouble(linha[indiceComponente]);
+                if (valorAtual > parametro) {
+                    listaAlertas.add(new String[]{
+                            linha[indiceUsuario],
+                            linha[indiceTimestamp],
+                            String.valueOf(valorAtual)
+                    });
+                }
+            } catch (NumberFormatException e) {}
+        }
+    }
+    public List<String[]> ordenarPorData(List<String[]> dadosLimpos) {
+        final int indiceColuna = 1;
+        int n = dadosLimpos.size();
+        DateTimeFormatter formatador = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+        for (int i = 1; i < n - 1; i++) {
+            boolean trocou = false;
+            for (int j = 1; j < n - 1 - (i - 1); j++) {
+                String dataAtualStr = null;
+                String proximaDataStr = null;
+                try {
+                    String[] linhaAtual = dadosLimpos.get(j);
+                    String[] proximaLinha = dadosLimpos.get(j + 1);
+                    dataAtualStr = linhaAtual[indiceColuna].trim();
+                    proximaDataStr = proximaLinha[indiceColuna].trim();
+                    LocalDateTime dataAtual = LocalDateTime.parse(dataAtualStr, formatador);
+                    LocalDateTime proximaData = LocalDateTime.parse(proximaDataStr, formatador);
+                    if (dataAtual.isBefore(proximaData)) {
+                        String[] temp = dadosLimpos.get(j);
+                        dadosLimpos.set(j, dadosLimpos.get(j + 1));
+                        dadosLimpos.set(j + 1, temp);
+                        trocou = true;
+                    }
+                } catch (DateTimeParseException | ArrayIndexOutOfBoundsException e) {
+                    System.out.println("Erro durante a ordenação por data: " + e.getMessage());
+                }
+            }
+            if (!trocou) {
+                break;
+            }
+        }
+        return dadosLimpos;
+    }
+    private void ordenarEsalvarAlertas(List<String[]> listaAlertas, String componente, int idUsuario) {
+        if (listaAlertas.size() > 1) {
+            List<String[]> alertasOrdenados = ordenarPorData(listaAlertas);
 
-        Map<String, Double> parametros = scriptSQL.buscarTodosParametrosPorUsuario(idUsuario);
-        if (parametros.isEmpty()) {
+            String nomeArquivo = String.format("alertas_%s_usuario_%d.csv", componente, idUsuario);
+            lerCsv.escreverCsvSobrescrevendo(nomeArquivo, alertasOrdenados);
+        }
+    }
+
+    
+    public void gerarAlertas (List<String[]> dadosLimpos, Integer idUsuario) throws SQLException, ErrosETL {
+
+               scriptSQL.setConnection();
+
+           Map<String, Double> parametros = null;
+               parametros = scriptSQL.buscarTodosParametrosPorUsuario(idUsuario);
+           if (parametros.isEmpty()) {
             System.out.println("Nenhum parâmetro de alerta encontrado para o usuário: " + idUsuario);
             return;
         }
@@ -125,68 +193,12 @@ public class ETL {
             verificarECriarAlertas(linhaAtual, indiceDisco, parametros.get("disco"), linhasAlertaDisco, indiceUsuario, indiceTimestamp);
         }
 
+
         ordenarEsalvarAlertas(linhasAlertaCpu, "cpu", idUsuario);
         ordenarEsalvarAlertas(linhasAlertaRam, "ram", idUsuario);
         ordenarEsalvarAlertas(linhasAlertaDisco, "disco", idUsuario);
-    }
-    private int indice(String[] header, String columnName) {
-        for (int i = 0; i < header.length; i++) {
-            if (header[i].equalsIgnoreCase(columnName)) {
-                return i;
-            }
-        }
-        return -1;
-    }
-    private void verificarECriarAlertas(String[] linha, int indiceComponente, Double parametro, List<String[]> listaAlertas, int indiceUsuario, int indiceTimestamp) {
-        if (indiceComponente != -1 && parametro != null) {
-            try {
-                double valorAtual = Double.parseDouble(linha[indiceComponente]);
-                if (valorAtual > parametro) {
-                    listaAlertas.add(new String[]{
-                            linha[indiceUsuario],
-                            linha[indiceTimestamp],
-                            String.valueOf(valorAtual)
-                    });
-                }
-            } catch (NumberFormatException e) {}
-        }
-    }
-    public List<String[]> ordenarPorData(List<String[]> dadosLimpos) {
-        final int indiceColuna = 1;
-        int n = dadosLimpos.size();
-        DateTimeFormatter formatador = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSSSSS");
-        for (int i = 1; i < n - 1; i++) {
-            boolean trocou = false;
-            for (int j = 1; j < n - 1 - (i - 1); j++) {
-                try {
-                    String[] linhaAtual = dadosLimpos.get(j);
-                    String[] proximaLinha = dadosLimpos.get(j + 1);
-                    String dataAtualStr = linhaAtual[indiceColuna].trim();
-                    String proximaDataStr = proximaLinha[indiceColuna].trim();
-                    LocalDateTime dataAtual = LocalDateTime.parse(dataAtualStr, formatador);
-                    LocalDateTime proximaData = LocalDateTime.parse(proximaDataStr, formatador);
-                    if (dataAtual.isBefore(proximaData)) {
-                        String[] temp = dadosLimpos.get(j);
-                        dadosLimpos.set(j, dadosLimpos.get(j + 1));
-                        dadosLimpos.set(j + 1, temp);
-                        trocou = true;
-                    }
-                } catch (DateTimeParseException | ArrayIndexOutOfBoundsException e) {
-                    System.out.println("Erro durante a ordenação por data: " + e.getMessage());
-                }
-            }
-            if (!trocou) {
-                break;
-            }
-        }
-        return dadosLimpos;
-    }
-    private void ordenarEsalvarAlertas(List<String[]> listaAlertas, String componente, int idUsuario) {
-        if (listaAlertas.size() > 1) {
-            List<String[]> alertasOrdenados = ordenarPorData(listaAlertas);
 
-            String nomeArquivo = String.format("alertas_%s_usuario_%d.csv", componente, idUsuario);
-            lerCsv.escreverCsvSobrescrevendo(nomeArquivo, alertasOrdenados);
-        }
+
+
     }
 }

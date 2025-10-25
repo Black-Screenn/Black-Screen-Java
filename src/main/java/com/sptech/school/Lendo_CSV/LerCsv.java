@@ -45,12 +45,13 @@ public class LerCsv {
     public void escreverCsvSobrescrevendo(String novoNomeCsv, List<String[]> linhas) {
         try (BufferedWriter writer = new BufferedWriter(
                 new OutputStreamWriter(new FileOutputStream(novoNomeCsv, false), StandardCharsets.UTF_8))) {
+
             for (String[] linha : linhas) {
                 String linhaCsv = String.join(",", linha);
                 writer.write(linhaCsv);
                 writer.newLine();
             }
-            System.out.println("Arquivo CSV criado/sobrescrito com sucesso: " + novoNomeCsv);
+            System.out.println("Arquivo CSV criado:" + novoNomeCsv);
         } catch (IOException e) {
             System.out.println("Erro ao escrever o arquivo: " + e);
         }
