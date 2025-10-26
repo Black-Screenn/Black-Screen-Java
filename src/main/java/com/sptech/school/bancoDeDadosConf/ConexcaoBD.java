@@ -9,8 +9,10 @@ import java.sql.SQLException;
 
 public class ConexcaoBD {
 
-
-
+    /*private static final String USER = "root";
+    private static final String PASSWORD = "urubu100";
+    private static final String URL = "jdbc:mysql://34.200.71.32/BlackScreen";
+    private static BasicDataSource dataSource;*/
 
 
     static {
