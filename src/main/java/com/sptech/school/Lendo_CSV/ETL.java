@@ -1,6 +1,7 @@
 package com.sptech.school.Lendo_CSV;
 
 import ErrosETL.ErrosETL;
+import com.sptech.school.Service.Client;
 import com.sptech.school.bancoDeDadosConf.ConexcaoBD;
 import com.sptech.school.bancoDeDadosConf.ScriptSQL;
 
@@ -18,6 +19,13 @@ public class ETL extends Thread{
     public LerCsv lerCsv;
     public ScriptSQL scriptSQL;
     public ConexcaoBD conexcaoBD;
+
+    Client meuClienteJira = new Client(
+            "https://chamadosblackscreen.atlassian.net",
+            "lukas.souza@sptech.school",
+            "ATATT3xFfGF0urTKaF9jA2fJmF0a2ACSSzwz4Y14Cmk0-6NzvORIz4dwcJHY6-NRmYAZGnrJ8GX2Xfd>"
+    );
+
 
     public ETL(LerCsv lerCsv, ScriptSQL scriptSQL, ConexcaoBD conexcaoBD) {
         this.lerCsv = lerCsv;
